@@ -4,14 +4,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/dark_blue_gradient"
+    android:background="@color/white"
     android:fitsSystemWindows="true">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
+        android:background="@color/white"
         app:elevation="0dp">
 
         <androidx.appcompat.widget.Toolbar
@@ -20,28 +20,8 @@
             android:layout_height="?attr/actionBarSize"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
-            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+            android:theme="@style/ThemeOverlay.AppCompat.Light">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Dashboard"
-                    android:textColor="#FFFFFF"
-                    android:textSize="24sp"
-                    android:textStyle="bold"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Welcome back, Driver"
-                    android:textColor="#80FFFFFF"
-                    android:textSize="14sp"/>
-            </LinearLayout>
 
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
@@ -59,8 +39,10 @@
             android:layout_height="0dp"
             android:layout_weight="0.25"
             app:cardCornerRadius="16dp"
-            app:cardElevation="8dp"
-            app:cardBackgroundColor="#1AFFFFFF"
+            app:cardElevation="2dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="#E8EAF6"
+            app:cardBackgroundColor="@color/white"
             android:layout_marginBottom="16dp">
 
             <FrameLayout
@@ -73,7 +55,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:indeterminateTint="#FFFFFF"/>
+                    android:indeterminateTint="#1A237E"/>
 
                 <!-- Registered Driver Info -->
                 <LinearLayout
@@ -88,14 +70,14 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Vehicle Details"
-                        android:textColor="#FFFFFF"
+                        android:textColor="#1A237E"
                         android:textSize="20sp"
                         android:textStyle="bold"/>
 
                     <View
                         android:layout_width="40dp"
                         android:layout_height="3dp"
-                        android:background="#FFFFFF"
+                        android:background="#1A237E"
                         android:layout_marginTop="8dp"
                         android:layout_marginBottom="16dp"/>
 
@@ -109,14 +91,14 @@
                             android:layout_width="24dp"
                             android:layout_height="24dp"
                             android:src="@drawable/ic_person"
-                            app:tint="#FFFFFF"/>
+                            app:tint="#1A237E"/>
 
                         <TextView
                             android:id="@+id/driverNameText"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="12dp"
-                            android:textColor="#FFFFFF"/>
+                            android:textColor="#1A237E"/>
                     </LinearLayout>
 
                     <LinearLayout
@@ -129,14 +111,14 @@
                             android:layout_width="24dp"
                             android:layout_height="24dp"
                             android:src="@drawable/ic_ambulance"
-                            app:tint="#FFFFFF"/>
+                            app:tint="#1A237E"/>
 
                         <TextView
                             android:id="@+id/vehicleTypeText"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="12dp"
-                            android:textColor="#FFFFFF"/>
+                            android:textColor="#1A237E"/>
                     </LinearLayout>
 
                     <LinearLayout
@@ -149,14 +131,14 @@
                             android:layout_width="24dp"
                             android:layout_height="24dp"
                             android:src="@drawable/ic_license_plate"
-                            app:tint="#FFFFFF"/>
+                            app:tint="#1A237E"/>
 
                         <TextView
                             android:id="@+id/plateNumberText"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="12dp"
-                            android:textColor="#FFFFFF"/>
+                            android:textColor="#1A237E"/>
                     </LinearLayout>
                 </LinearLayout>
 
@@ -174,13 +156,13 @@
                         android:layout_width="48dp"
                         android:layout_height="48dp"
                         android:src="@drawable/ic_register"
-                        app:tint="#FFFFFF"/>
+                        app:tint="#1A237E"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Register as Driver"
-                        android:textColor="#FFFFFF"
+                        android:textColor="#1A237E"
                         android:textSize="20sp"
                         android:textStyle="bold"
                         android:layout_marginTop="16dp"/>
@@ -189,7 +171,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Register your vehicle to start operating"
-                        android:textColor="#80FFFFFF"
+                        android:textColor="#5C6BC0"
                         android:layout_marginTop="8dp"
                         android:textAlignment="center"/>
 
@@ -198,8 +180,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Register Now"
-                        android:textColor="@color/dark_blue"
-                        android:backgroundTint="#FFFFFF"
+                        android:textColor="#FFFFFF"
+                        android:backgroundTint="#1A237E"
                         android:layout_marginTop="16dp"
                         app:cornerRadius="24dp"
                         android:paddingStart="24dp"
@@ -214,8 +196,10 @@
             android:layout_height="0dp"
             android:layout_weight="0.75"
             app:cardCornerRadius="16dp"
-            app:cardElevation="8dp"
-            app:cardBackgroundColor="#1AFFFFFF">
+            app:cardElevation="2dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="#E8EAF6"
+            app:cardBackgroundColor="@color/white">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -234,7 +218,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Nearby Emergencies"
-                        android:textColor="#FFFFFF"
+                        android:textColor="#1A237E"
                         android:textSize="20sp"
                         android:textStyle="bold"/>
 
@@ -243,7 +227,7 @@
                         android:layout_height="wrap_content"
                         android:text="Live"
                         android:textColor="#FFFFFF"
-                        app:chipBackgroundColor="#4CAF50"
+                        app:chipBackgroundColor="#43A047"
                         app:chipIcon="@drawable/ic_live"
                         app:chipIconTint="#FFFFFF"/>
                 </LinearLayout>
@@ -251,7 +235,7 @@
                 <View
                     android:layout_width="40dp"
                     android:layout_height="3dp"
-                    android:background="#FFFFFF"
+                    android:background="#1A237E"
                     android:layout_marginTop="8dp"
                     android:layout_marginBottom="16dp"/>
 
@@ -274,13 +258,13 @@
                         android:layout_width="64dp"
                         android:layout_height="64dp"
                         android:src="@drawable/ic_no_emergencies"
-                        app:tint="#80FFFFFF"/>
+                        app:tint="#5C6BC0"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="No Emergencies Nearby"
-                        android:textColor="#FFFFFF"
+                        android:textColor="#1A237E"
                         android:textSize="18sp"
                         android:textStyle="bold"
                         android:layout_marginTop="16dp"/>
@@ -289,7 +273,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="You'll be notified when new emergencies are reported"
-                        android:textColor="#80FFFFFF"
+                        android:textColor="#5C6BC0"
                         android:layout_marginTop="8dp"
                         android:textAlignment="center"/>
                 </LinearLayout>

@@ -4,28 +4,23 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/dark_blue_gradient">
+    android:background="@color/white">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        app:elevation="0dp">
+        android:background="@color/white"
+        app:elevation="0dp"
+        android:layout_marginTop="25dp">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:navigationIcon="@drawable/ic_back"
-            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+            app:navigationIconTint="#1A237E"
+            android:theme="@style/ThemeOverlay.AppCompat.Light">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Driver Registration"
-                android:textColor="#FFFFFF"
-                android:textSize="20sp"
-                android:textStyle="bold"/>
 
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
@@ -39,14 +34,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="24dp">
 
             <!-- Personal Information Section -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Personal Information"
-                android:textColor="#FFFFFF"
+                android:textColor="#1A237E"
                 android:textSize="20sp"
                 android:textStyle="bold"/>
 
@@ -56,15 +51,23 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:hint="Full Name"
-                app:boxStrokeColor="#FFFFFF"
-                android:textColorHint="#80FFFFFF">
+                app:boxStrokeColor="#1A237E"
+                app:hintTextColor="#5C6BC0"
+                android:textColorHint="#5C6BC0"
+                app:startIconDrawable="@drawable/ic_person"
+                app:startIconTint="#1A237E"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/fullNameInput"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textPersonName"
-                    android:textColor="#FFFFFF"/>
+                    android:textColor="#1A237E"
+                    android:padding="16dp"/>
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -73,8 +76,15 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:hint="Date of Birth"
-                app:boxStrokeColor="#FFFFFF"
-                android:textColorHint="#80FFFFFF">
+                app:boxStrokeColor="#1A237E"
+                app:hintTextColor="#5C6BC0"
+                android:textColorHint="#5C6BC0"
+                app:startIconDrawable="@drawable/ic_calendar"
+                app:startIconTint="#1A237E"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/dobInput"
@@ -82,7 +92,8 @@
                     android:layout_height="wrap_content"
                     android:inputType="none"
                     android:focusable="false"
-                    android:textColor="#FFFFFF"/>
+                    android:textColor="#1A237E"
+                    android:padding="16dp"/>
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -91,15 +102,23 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:hint="Phone Number"
-                app:boxStrokeColor="#FFFFFF"
-                android:textColorHint="#80FFFFFF">
+                app:boxStrokeColor="#1A237E"
+                app:hintTextColor="#5C6BC0"
+                android:textColorHint="#5C6BC0"
+                app:startIconDrawable="@drawable/ic_phone"
+                app:startIconTint="#1A237E"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/phoneInput"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="phone"
-                    android:textColor="#FFFFFF"/>
+                    android:textColor="#1A237E"
+                    android:padding="16dp"/>
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -108,8 +127,15 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:hint="Current Address"
-                app:boxStrokeColor="#FFFFFF"
-                android:textColorHint="#80FFFFFF">
+                app:boxStrokeColor="#1A237E"
+                app:hintTextColor="#5C6BC0"
+                android:textColorHint="#5C6BC0"
+                app:startIconDrawable="@drawable/ic_location"
+                app:startIconTint="#1A237E"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/addressInput"
@@ -117,7 +143,8 @@
                     android:layout_height="wrap_content"
                     android:inputType="textMultiLine"
                     android:minLines="2"
-                    android:textColor="#FFFFFF"/>
+                    android:textColor="#1A237E"
+                    android:padding="16dp"/>
             </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Professional Information Section -->
@@ -125,7 +152,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Professional Information"
-                android:textColor="#FFFFFF"
+                android:textColor="#1A237E"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:layout_marginTop="32dp"/>
@@ -136,15 +163,23 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:hint="Driver's License Number"
-                app:boxStrokeColor="#FFFFFF"
-                android:textColorHint="#80FFFFFF">
+                app:boxStrokeColor="#1A237E"
+                app:hintTextColor="#5C6BC0"
+                android:textColorHint="#5C6BC0"
+                app:startIconDrawable="@drawable/ic_license"
+                app:startIconTint="#1A237E"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/licenseNumberInput"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="text"
-                    android:textColor="#FFFFFF"/>
+                    android:textColor="#1A237E"
+                    android:padding="16dp"/>
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -153,15 +188,23 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:hint="License Type"
-                app:boxStrokeColor="#FFFFFF"
-                android:textColorHint="#80FFFFFF">
+                app:boxStrokeColor="#1A237E"
+                app:hintTextColor="#5C6BC0"
+                android:textColorHint="#5C6BC0"
+                app:startIconDrawable="@drawable/ic_type"
+                app:startIconTint="#1A237E"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp">
 
                 <AutoCompleteTextView
                     android:id="@+id/licenseTypeDropdown"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="none"
-                    android:textColor="#FFFFFF"/>
+                    android:textColor="#1A237E"
+                    android:padding="16dp"/>
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -170,8 +213,15 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:hint="License Expiry Date"
-                app:boxStrokeColor="#FFFFFF"
-                android:textColorHint="#80FFFFFF">
+                app:boxStrokeColor="#1A237E"
+                app:hintTextColor="#5C6BC0"
+                android:textColorHint="#5C6BC0"
+                app:startIconDrawable="@drawable/ic_calendar"
+                app:startIconTint="#1A237E"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/licenseExpiryInput"
@@ -179,7 +229,8 @@
                     android:layout_height="wrap_content"
                     android:inputType="none"
                     android:focusable="false"
-                    android:textColor="#FFFFFF"/>
+                    android:textColor="#1A237E"
+                    android:padding="16dp"/>
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -188,15 +239,23 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:hint="Years of Driving Experience"
-                app:boxStrokeColor="#FFFFFF"
-                android:textColorHint="#80FFFFFF">
+                app:boxStrokeColor="#1A237E"
+                app:hintTextColor="#5C6BC0"
+                android:textColorHint="#5C6BC0"
+                app:startIconDrawable="@drawable/ic_experience"
+                app:startIconTint="#1A237E"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/experienceInput"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="number"
-                    android:textColor="#FFFFFF"/>
+                    android:textColor="#1A237E"
+                    android:padding="16dp"/>
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.switchmaterial.SwitchMaterial
@@ -204,8 +263,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Experience with Emergency Vehicles"
-                android:textColor="#FFFFFF"
-                android:layout_marginTop="16dp"/>
+                android:textColor="#1A237E"
+                android:layout_marginTop="16dp"
+                app:thumbTint="#1A237E"
+                app:trackTint="#E8EAF6"/>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/emergencyExperienceLayout"
@@ -214,8 +275,15 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:hint="Years of Emergency Vehicle Experience"
-                app:boxStrokeColor="#FFFFFF"
-                android:textColorHint="#80FFFFFF"
+                app:boxStrokeColor="#1A237E"
+                app:hintTextColor="#5C6BC0"
+                android:textColorHint="#5C6BC0"
+                app:startIconDrawable="@drawable/ic_ambulance"
+                app:startIconTint="#1A237E"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp"
                 android:visibility="gone">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -223,7 +291,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="number"
-                    android:textColor="#FFFFFF"/>
+                    android:textColor="#1A237E"
+                    android:padding="16dp"/>
             </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Vehicle Information Section -->
@@ -231,7 +300,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Vehicle Information"
-                android:textColor="#FFFFFF"
+                android:textColor="#1A237E"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:layout_marginTop="32dp"/>
@@ -242,15 +311,23 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:hint="Vehicle Registration Number"
-                app:boxStrokeColor="#FFFFFF"
-                android:textColorHint="#80FFFFFF">
+                app:boxStrokeColor="#1A237E"
+                app:hintTextColor="#5C6BC0"
+                android:textColorHint="#5C6BC0"
+                app:startIconDrawable="@drawable/ic_license_plate"
+                app:startIconTint="#1A237E"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/vehicleRegInput"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="text"
-                    android:textColor="#FFFFFF"/>
+                    android:textColor="#1A237E"
+                    android:padding="16dp"/>
             </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Vehicle Features -->
@@ -258,7 +335,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Vehicle Features"
-                android:textColor="#FFFFFF"
+                android:textColor="#1A237E"
+                android:textSize="16sp"
                 android:layout_marginTop="16dp"/>
 
             <com.google.android.material.checkbox.MaterialCheckBox
@@ -266,38 +344,59 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Air Conditioning"
-                android:textColor="#FFFFFF"/>
+                android:textColor="#1A237E"
+                app:buttonTint="#1A237E"
+                android:layout_marginTop="8dp"/>
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/oxygenCheckbox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Oxygen Cylinder Holder"
-                android:textColor="#FFFFFF"/>
+                android:textColor="#1A237E"
+                app:buttonTint="#1A237E"/>
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/stretcherCheckbox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Stretcher"
-                android:textColor="#FFFFFF"/>
+                android:textColor="#1A237E"
+                app:buttonTint="#1A237E"/>
 
             <!-- Insurance Information -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Insurance Information"
+                android:textColor="#1A237E"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:layout_marginTop="32dp"/>
+
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:hint="Insurance Policy Number"
-                app:boxStrokeColor="#FFFFFF"
-                android:textColorHint="#80FFFFFF">
+                app:boxStrokeColor="#1A237E"
+                app:hintTextColor="#5C6BC0"
+                android:textColorHint="#5C6BC0"
+                app:startIconDrawable="@drawable/ic_insurance"
+                app:startIconTint="#1A237E"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/insurancePolicyInput"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="text"
-                    android:textColor="#FFFFFF"/>
+                    android:textColor="#1A237E"
+                    android:padding="16dp"/>
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -306,8 +405,15 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:hint="Insurance Expiry Date"
-                app:boxStrokeColor="#FFFFFF"
-                android:textColorHint="#80FFFFFF">
+                app:boxStrokeColor="#1A237E"
+                app:hintTextColor="#5C6BC0"
+                android:textColorHint="#5C6BC0"
+                app:startIconDrawable="@drawable/ic_calendar"
+                app:startIconTint="#1A237E"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/insuranceExpiryInput"
@@ -315,19 +421,23 @@
                     android:layout_height="wrap_content"
                     android:inputType="none"
                     android:focusable="false"
-                    android:textColor="#FFFFFF"/>
+                    android:textColor="#1A237E"
+                    android:padding="16dp"/>
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Submit Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/submitButton"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="60dp"
                 android:layout_marginTop="32dp"
                 android:layout_marginBottom="24dp"
                 android:text="Submit Registration"
-                android:padding="12dp"
-                android:backgroundTint="#FFFFFF"
-                android:textColor="@color/design_default_color_primary_dark"/>
+                android:textAllCaps="false"
+                android:textSize="16sp"
+                app:cornerRadius="12dp"
+                android:backgroundTint="#1A237E"
+                android:textColor="#FFFFFF"/>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
