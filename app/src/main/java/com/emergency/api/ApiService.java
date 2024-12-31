@@ -1,6 +1,9 @@
 package com.emergency.api;
 
 
+import com.emergency.model.AmbulanceDriver;
+import com.emergency.model.AmbulanceDriverRegistrationDto;
+import com.emergency.model.ApiResponse;
 import com.emergency.model.JwtResponse;
 import com.emergency.model.LoginRequest;
 import com.emergency.model.MessageResponse;
@@ -20,5 +23,15 @@ public interface ApiService {
 
     @POST("api/auth/login")
     Call<JwtResponse> login(@Body LoginRequest request);
+
+    @POST("/api/ambulance/register")
+    Call<ApiResponse<MessageResponse>> registerDriver(
+            @Header("Authorization") String token,
+            @Body AmbulanceDriverRegistrationDto registrationDto
+    );
+
+    @GET("/api/ambulance/profile")
+    Call<ApiResponse<AmbulanceDriver>> getDriverProfile(@Header("Authorization") String token);
+
 
 }

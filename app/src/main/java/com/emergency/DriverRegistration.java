@@ -2,20 +2,21 @@ package com.emergency;
 
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.TextView;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
+import com.emergency.api.RetrofitClient;
+import com.emergency.model.AmbulanceDriverRegistrationDto;
+import com.emergency.model.ApiResponse;
+import com.emergency.model.MessageResponse;
+import com.emergency.util.SessionManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.datepicker.MaterialDatePicker;
@@ -23,10 +24,16 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.gson.Gson;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class DriverRegistration extends AppCompatActivity {
     private TextInputEditText fullNameInput;
@@ -237,38 +244,128 @@ public class DriverRegistration extends AppCompatActivity {
     }
 
     private void submitRegistration() {
-        // Show loading state
         submitButton.setEnabled(false);
         submitButton.setText("Submitting...");
 
-        // Create registration data object
-        DriverRegistrationDTO registration = new DriverRegistrationDTO(
-                fullNameInput.getText().toString(),
-                dobInput.getText().toString(),
-                phoneInput.getText().toString(),
-                addressInput.getText().toString(),
-                licenseNumberInput.getText().toString(),
-                licenseTypeDropdown.getText().toString(),
-                licenseExpiryInput.getText().toString(),
-                Integer.parseInt(experienceInput.getText().toString()),
-                emergencyExperienceSwitch.isChecked(),
-                emergencyExperienceSwitch.isChecked() ?
-                        Integer.parseInt(emergencyExperienceInput.getText().toString()) : 0,
-                vehicleRegInput.getText().toString(),
-                acCheckbox.isChecked(),
-                oxygenCheckbox.isChecked(),
-                stretcherCheckbox.isChecked(),
-                insurancePolicyInput.getText().toString(),
-                insuranceExpiryInput.getText().toString()
-        );
+        // Get session manager
+        SessionManager sessionManager = new SessionManager(this);
 
-        // TODO: Send registration to backend
-        new Handler().postDelayed(() -> {
-            // Simulate API call
-            runOnUiThread(() -> {
-                showSuccessDialog();
-            });
-        }, 2000);
+        // Convert license type
+        String licenseType;
+        String licenseTypeStr = licenseTypeDropdown.getText().toString();
+        switch (licenseTypeStr) {
+            case "Commercial Driver's License":
+                licenseType = "COMMERCIAL_DRIVERS_LICENSE";
+                break;
+            case "Emergency Vehicle License":
+                licenseType = "EMERGENCY_VEHICLE_LICENSE";
+                break;
+            case "Professional Driver's License":
+                licenseType = "PROFESSIONAL_DRIVERS_LICENSE";
+                break;
+            default:
+                showErrorDialog("Please select a license type");
+                submitButton.setEnabled(true);
+                submitButton.setText("Submit");
+                return;
+        }
+
+        // Convert dates from dd/MM/yyyy to yyyy-MM-dd
+        SimpleDateFormat inputFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+
+        String dob = "", insuranceExpiry = "";
+        try {
+            Date date = inputFormat.parse(dobInput.getText().toString());
+            dob = outputFormat.format(date);
+
+            date = inputFormat.parse(insuranceExpiryInput.getText().toString());
+            insuranceExpiry = outputFormat.format(date);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            showErrorDialog("Invalid date format");
+            submitButton.setEnabled(true);
+            submitButton.setText("Submit");
+            return;
+        }
+
+        // Create registration DTO
+        AmbulanceDriverRegistrationDto registration = new AmbulanceDriverRegistrationDto();
+        registration.setFullName(fullNameInput.getText().toString().trim());
+        registration.setDateOfBirth(dob);
+        registration.setPhoneNumber(phoneInput.getText().toString().trim());
+        registration.setCurrentAddress(addressInput.getText().toString().trim());
+        registration.setDriversLicenseNumber(licenseNumberInput.getText().toString().trim());
+        registration.setLicenseType(licenseType);
+        registration.setExperienceWithEmergencyVehicle(emergencyExperienceSwitch.isChecked());
+
+        if (emergencyExperienceSwitch.isChecked() && !emergencyExperienceInput.getText().toString().trim().isEmpty()) {
+            registration.setYearsOfEmergencyExperience(
+                    Integer.parseInt(emergencyExperienceInput.getText().toString().trim())
+            );
+        } else {
+            registration.setYearsOfEmergencyExperience(0);
+        }
+
+        registration.setVehicleRegistrationNumber(vehicleRegInput.getText().toString().trim());
+        registration.setHasAirConditioning(acCheckbox.isChecked());
+        registration.setHasOxygenCylinderHolder(oxygenCheckbox.isChecked());
+        registration.setHasStretcher(stretcherCheckbox.isChecked());
+        registration.setInsurancePolicyNumber(insurancePolicyInput.getText().toString().trim());
+        registration.setInsuranceExpiryDate(insuranceExpiry);
+
+        // Make API call using RetrofitClient
+        RetrofitClient.getInstance()
+                .getApiService()
+                .registerDriver("Bearer " + sessionManager.getToken(), registration)
+                .enqueue(new Callback<ApiResponse<MessageResponse>>() {
+                    @Override
+                    public void onResponse(Call<ApiResponse<MessageResponse>> call,
+                                           Response<ApiResponse<MessageResponse>> response) {
+                        submitButton.setEnabled(true);
+                        submitButton.setText("Submit");
+
+                        if (response.isSuccessful()) {
+                            ApiResponse<MessageResponse> apiResponse = response.body();
+                            if (apiResponse != null && apiResponse.isSuccess()) {
+                                showSuccessDialog();
+                            } else {
+                                String errorMessage = apiResponse != null ?
+                                        apiResponse.getMessage() :
+                                        "Registration failed";
+                                showErrorDialog(errorMessage);
+                            }
+                        } else {
+                            try {
+                                // Try to parse error response
+                                Gson gson = new Gson();
+                                ApiResponse<?> errorResponse = gson.fromJson(
+                                        response.errorBody().string(),
+                                        ApiResponse.class
+                                );
+                                showErrorDialog(errorResponse.getMessage());
+                            } catch (Exception e) {
+                                showErrorDialog("Registration failed. Please try again.");
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ApiResponse<MessageResponse>> call, Throwable t) {
+                        submitButton.setEnabled(true);
+                        submitButton.setText("Submit");
+                        Log.e("API_ERROR", "Registration failed", t);
+                        showErrorDialog("Network error. Please check your connection.");
+                    }
+                });
+    }
+
+    private void showErrorDialog(String message) {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Registration Failed")
+                .setMessage(message)
+                .setPositiveButton("OK", null)
+                .show();
     }
 
     private void showSuccessDialog() {

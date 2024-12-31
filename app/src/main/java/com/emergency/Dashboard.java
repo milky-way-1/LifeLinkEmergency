@@ -1,8 +1,11 @@
 package com.emergency;
 
+import static android.content.ContentValues.TAG;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ProgressBar;
@@ -19,10 +22,20 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.emergency.api.RetrofitClient;
+import com.emergency.model.AmbulanceDriver;
+import com.emergency.model.ApiResponse;
+import com.emergency.util.SessionManager;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class Dashboard extends AppCompatActivity {
     private RecyclerView emergencyRecyclerView;
@@ -32,6 +45,8 @@ public class Dashboard extends AppCompatActivity {
     private ProgressBar driverStatusLoading;
     private MaterialButton registerButton;
     private EmergencyAdapter emergencyAdapter;
+
+    private SessionManager sessionManager;
 
     // Driver info TextViews
     private TextView driverNameText;
@@ -52,7 +67,7 @@ public class Dashboard extends AppCompatActivity {
         initializeViews();
         setupToolbar();
         setupRecyclerView();
-        checkDriverStatus();
+        checkDriverProfile();
         loadNearbyEmergencies();
     }
 
@@ -63,6 +78,8 @@ public class Dashboard extends AppCompatActivity {
         unregisteredDriverLayout = findViewById(R.id.unregisteredDriverLayout);
         driverStatusLoading = findViewById(R.id.driverStatusLoading);
         registerButton = findViewById(R.id.registerButton);
+
+        sessionManager = new SessionManager(this);
 
         driverNameText = findViewById(R.id.driverNameText);
         vehicleTypeText = findViewById(R.id.vehicleTypeText);
@@ -94,35 +111,105 @@ public class Dashboard extends AppCompatActivity {
         emergencyRecyclerView.addItemDecoration(new SpacingItemDecoration(spacingInPixels));
     }
 
-    private void checkDriverStatus() {
-        // Show loading state
+    private void checkDriverProfile() {
+        showLoadingState();
+
+        String token = sessionManager.getToken();
+        if (token == null) {
+            showError("Authentication error. Please login again.");
+            sessionManager.logout();
+            return;
+        }
+
+        RetrofitClient.getInstance()
+                .getApiService()
+                .getDriverProfile("Bearer " + token)
+                .enqueue(new Callback<ApiResponse<AmbulanceDriver>>() {
+                    @Override
+                    public void onResponse(Call<ApiResponse<AmbulanceDriver>> call,
+                                           Response<ApiResponse<AmbulanceDriver>> response) {
+                        hideLoadingState();
+
+                        if (response.isSuccessful()) {
+                            ApiResponse<AmbulanceDriver> apiResponse = response.body();
+                            if (apiResponse != null) {
+                                if (apiResponse.isSuccess() && apiResponse.getData() != null) {
+                                    updateDriverStatus(true, apiResponse.getData());
+                                } else {
+                                    Log.d(TAG, "No driver profile found: " + apiResponse.getMessage());
+                                    updateDriverStatus(false, null);
+                                }
+                            } else {
+                                showError("Invalid response from server");
+                                updateDriverStatus(false, null);
+                            }
+                        } else {
+                            handleErrorResponse(response);
+                            updateDriverStatus(false, null);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ApiResponse<AmbulanceDriver>> call, Throwable t) {
+                        Log.e(TAG, "Network error", t);
+                        hideLoadingState();
+                        showError("Network error. Please check your connection.");
+                        updateDriverStatus(false, null);
+                    }
+                });
+    }
+
+    private void showLoadingState() {
         driverStatusLoading.setVisibility(View.VISIBLE);
         registeredDriverLayout.setVisibility(View.GONE);
         unregisteredDriverLayout.setVisibility(View.GONE);
-
-        // TODO: Replace with actual API call
-        new Handler().postDelayed(() -> {
-            // Simulate API call
-            boolean isRegistered = false; // Get this from API
-            updateDriverStatus(isRegistered);
-        }, 1500);
     }
 
-    private void updateDriverStatus(boolean isRegistered) {
+    private void hideLoadingState() {
         driverStatusLoading.setVisibility(View.GONE);
+    }
 
-        if (isRegistered) {
+    private void updateDriverStatus(boolean isRegistered, AmbulanceDriver driver) {
+        if (isRegistered && driver != null) {
             registeredDriverLayout.setVisibility(View.VISIBLE);
             unregisteredDriverLayout.setVisibility(View.GONE);
 
-            // TODO: Replace with actual driver data
-            driverNameText.setText("John Doe");
-            vehicleTypeText.setText("Ambulance Type II");
-            plateNumberText.setText("ABC 123");
+            driverNameText.setText(driver.getFullName());
+            vehicleTypeText.setText(formatLicenseType(driver.getLicenseType()));
+            plateNumberText.setText(driver.getVehicleRegistrationNumber());
         } else {
             registeredDriverLayout.setVisibility(View.GONE);
             unregisteredDriverLayout.setVisibility(View.VISIBLE);
         }
+    }
+
+    private String formatLicenseType(String licenseType) {
+        if (licenseType == null) return "N/A";
+        return licenseType.replace("_", " ")
+                .toLowerCase()
+                .replace("drivers", "Driver's")
+                .replace("license", "License");
+    }
+
+    private void handleErrorResponse(Response<?> response) {
+        try {
+            String errorBody = response.errorBody().string();
+            Log.e(TAG, "Error response: " + errorBody);
+            Gson gson = new Gson();
+            ApiResponse<?> errorResponse = gson.fromJson(errorBody, ApiResponse.class);
+            showError(errorResponse.getMessage());
+        } catch (Exception e) {
+            Log.e(TAG, "Error parsing error response", e);
+            showError("Failed to fetch profile");
+        }
+    }
+
+    private void showError(String message) {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Error")
+                .setMessage(message)
+                .setPositiveButton("OK", null)
+                .show();
     }
 
     private void loadNearbyEmergencies() {
@@ -163,6 +250,6 @@ public class Dashboard extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        checkDriverStatus();
+        checkDriverProfile();
     }
 }
