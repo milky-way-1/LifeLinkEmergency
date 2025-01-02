@@ -54,4 +54,6 @@ dependencies {
     implementation("tech.gusavila92:java-android-websocket-client:1.2.2")
     implementation("com.google.android.gms:play-services-maps:18.1.0")
     implementation ("com.google.android.gms:play-services-location:21.0.1")
+    implementation("com.google.android.material:material:1.11.0")
+    implementation("org.greenrobot:eventbus:3.3.1")
 }

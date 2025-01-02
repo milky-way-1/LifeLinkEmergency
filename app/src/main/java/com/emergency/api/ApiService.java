@@ -4,7 +4,10 @@ package com.emergency.api;
 import com.emergency.model.AmbulanceDriver;
 import com.emergency.model.AmbulanceDriverRegistrationDto;
 import com.emergency.model.ApiResponse;
+import com.emergency.model.Booking;
 import com.emergency.model.JwtResponse;
+import com.emergency.model.Location;
+import com.emergency.model.LocationUpdateDto;
 import com.emergency.model.LoginRequest;
 import com.emergency.model.MessageResponse;
 import com.emergency.model.SignupRequest;
@@ -16,6 +19,8 @@ import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.POST;
+import retrofit2.http.PUT;
+import retrofit2.http.Path;
 
 public interface ApiService {
     @POST("api/auth/signup")
@@ -32,6 +37,28 @@ public interface ApiService {
 
     @GET("/api/ambulance/profile")
     Call<ApiResponse<AmbulanceDriver>> getDriverProfile(@Header("Authorization") String token);
+
+    @PUT("api/ambulance/location")
+    Call<Location> updateLocation(
+            @Header("Authorization") String token,
+            @Body LocationUpdateDto locationDto
+    );
+
+    @GET("api/bookings")
+    Call<List<Booking>> getDriverBookings(@Header("Authorization") String token);
+
+    @GET("api/bookings/{id}")
+    Call<Booking> getBookingDetails(
+            @Header("Authorization") String token,
+            @Path("id") String bookingId
+    );
+
+
+        @POST("api/bookings/{id}/complete")
+        Call<Booking> completeBooking(
+                @Header("Authorization") String token,
+                @Path("id") String bookingId
+        );
 
 
 }

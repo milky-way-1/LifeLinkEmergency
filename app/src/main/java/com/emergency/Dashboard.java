@@ -5,6 +5,7 @@ import static android.content.ContentValues.TAG;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -25,10 +26,17 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.emergency.api.RetrofitClient;
 import com.emergency.model.AmbulanceDriver;
 import com.emergency.model.ApiResponse;
+import com.emergency.model.Booking;
+import com.emergency.util.LocationUpdateService;
+import com.emergency.util.NewBookingEvent;
 import com.emergency.util.SessionManager;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.gson.Gson;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,15 +46,21 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class Dashboard extends AppCompatActivity {
-    private RecyclerView emergencyRecyclerView;
+    private static final String TAG = "Dashboard";
+    private static final long BOOKING_CHECK_INTERVAL = 10000; // 10 seconds
+
+    private RecyclerView bookingRecyclerView;
     private View emptyStateLayout;
     private View registeredDriverLayout;
     private View unregisteredDriverLayout;
     private ProgressBar driverStatusLoading;
     private MaterialButton registerButton;
-    private EmergencyAdapter emergencyAdapter;
+    private BookingAdapter bookingAdapter;
 
     private SessionManager sessionManager;
+    private LocationUpdateService locationService;
+    private Handler bookingHandler;
+    private boolean isCheckingBookings = false;
 
     // Driver info TextViews
     private TextView driverNameText;
@@ -64,15 +78,17 @@ public class Dashboard extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
         );
 
+        locationService = LocationUpdateService.getInstance(this);
+        bookingHandler = new Handler(Looper.getMainLooper());
+
         initializeViews();
         setupToolbar();
         setupRecyclerView();
         checkDriverProfile();
-        loadNearbyEmergencies();
     }
 
     private void initializeViews() {
-        emergencyRecyclerView = findViewById(R.id.emergencyRecyclerView);
+        bookingRecyclerView = findViewById(R.id.bookingRecyclerView);
         emptyStateLayout = findViewById(R.id.emptyStateLayout);
         registeredDriverLayout = findViewById(R.id.registeredDriverLayout);
         unregisteredDriverLayout = findViewById(R.id.unregisteredDriverLayout);
@@ -95,20 +111,20 @@ public class Dashboard extends AppCompatActivity {
     private void setupToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+        }
     }
 
     private void setupRecyclerView() {
-        emergencyAdapter = new EmergencyAdapter(new ArrayList<>(), this::onEmergencyClicked);
-        emergencyRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        emergencyRecyclerView.setAdapter(emergencyAdapter);
-
-        // Add animation
-        emergencyRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        bookingAdapter = new BookingAdapter(new ArrayList<>(), this::onBookingClicked);
+        bookingRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        bookingRecyclerView.setAdapter(bookingAdapter);
+        bookingRecyclerView.setItemAnimator(new DefaultItemAnimator());
 
         // Add spacing between items
-        int spacingInPixels = getResources().getDimensionPixelSize(R.dimen.emergency_item_spacing);
-        emergencyRecyclerView.addItemDecoration(new SpacingItemDecoration(spacingInPixels));
+        int spacingInPixels = getResources().getDimensionPixelSize(R.dimen.booking_item_spacing);
+        bookingRecyclerView.addItemDecoration(new SpacingItemDecoration(spacingInPixels));
     }
 
     private void checkDriverProfile() {
@@ -130,17 +146,13 @@ public class Dashboard extends AppCompatActivity {
                                            Response<ApiResponse<AmbulanceDriver>> response) {
                         hideLoadingState();
 
-                        if (response.isSuccessful()) {
+                        if (response.isSuccessful() && response.body() != null) {
                             ApiResponse<AmbulanceDriver> apiResponse = response.body();
-                            if (apiResponse != null) {
-                                if (apiResponse.isSuccess() && apiResponse.getData() != null) {
-                                    updateDriverStatus(true, apiResponse.getData());
-                                } else {
-                                    Log.d(TAG, "No driver profile found: " + apiResponse.getMessage());
-                                    updateDriverStatus(false, null);
-                                }
+                            if (apiResponse.isSuccess() && apiResponse.getData() != null) {
+                                updateDriverStatus(true, apiResponse.getData());
+                                startServices(); // Start services only if driver is registered
                             } else {
-                                showError("Invalid response from server");
+                                Log.d(TAG, "No driver profile found: " + apiResponse.getMessage());
                                 updateDriverStatus(false, null);
                             }
                         } else {
@@ -157,6 +169,74 @@ public class Dashboard extends AppCompatActivity {
                         updateDriverStatus(false, null);
                     }
                 });
+    }
+
+    private void startServices() {
+        locationService.startUpdates();
+        startBookingChecks();
+    }
+
+    private void stopServices() {
+        locationService.stopUpdates();
+        stopBookingChecks();
+    }
+
+    private void startBookingChecks() {
+        isCheckingBookings = true;
+        checkForBookings();
+    }
+
+    private void stopBookingChecks() {
+        isCheckingBookings = false;
+        bookingHandler.removeCallbacksAndMessages(null);
+    }
+
+    private void checkForBookings() {
+        if (!isCheckingBookings) return;
+
+        String token = sessionManager.getToken();
+        if (token == null) return;
+
+        RetrofitClient.getInstance()
+                .getApiService()
+                .getDriverBookings("Bearer " + token)
+                .enqueue(new Callback<List<Booking>>() {
+                    @Override
+                    public void onResponse(Call<List<Booking>> call,
+                                           Response<List<Booking>> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            List<Booking> bookings = response.body();
+                            updateBookingList(bookings);
+                        }
+                        // Schedule next check
+                        if (isCheckingBookings) {
+                            bookingHandler.postDelayed(() -> checkForBookings(),
+                                    BOOKING_CHECK_INTERVAL);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<List<Booking>> call, Throwable t) {
+                        Log.e(TAG, "Failed to check bookings", t);
+                        if (isCheckingBookings) {
+                            bookingHandler.postDelayed(() -> checkForBookings(),
+                                    BOOKING_CHECK_INTERVAL);
+                        }
+                    }
+                });
+    }
+
+    private void updateBookingList(List<Booking> bookings) {
+        runOnUiThread(() -> {
+            if (bookings.isEmpty()) {
+                bookingRecyclerView.setVisibility(View.GONE);
+                emptyStateLayout.setVisibility(View.VISIBLE);
+            } else {
+                bookingRecyclerView.setVisibility(View.VISIBLE);
+                emptyStateLayout.setVisibility(View.GONE);
+                bookingAdapter.updateBookings(bookings);
+            }
+        });
     }
 
     private void showLoadingState() {
@@ -205,51 +285,85 @@ public class Dashboard extends AppCompatActivity {
     }
 
     private void showError(String message) {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle("Error")
-                .setMessage(message)
-                .setPositiveButton("OK", null)
-                .show();
-    }
-
-    private void loadNearbyEmergencies() {
-        // TODO: Replace with actual API call
-        new Handler().postDelayed(() -> {
-            List<EmergencyDTO> emergencies = getDummyEmergencies(); // Replace with API call
-            updateEmergencyList(emergencies);
-        }, 1000);
-    }
-
-    private void updateEmergencyList(List<EmergencyDTO> emergencies) {
-        if (emergencies.isEmpty()) {
-            emergencyRecyclerView.setVisibility(View.GONE);
-            emptyStateLayout.setVisibility(View.VISIBLE);
-        } else {
-            emergencyRecyclerView.setVisibility(View.VISIBLE);
-            emptyStateLayout.setVisibility(View.GONE);
-            emergencyAdapter.updateEmergencies(emergencies);
-        }
-    }
-
-    private void onEmergencyClicked(EmergencyDTO emergency) {
-//        Intent intent = new Intent(this, EmergencyDetailActivity.class);
-//        intent.putExtra("emergency_id", emergency.getId());
-//        startActivity(intent);
-//        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
-    }
-
-    // Temporary method for testing
-    private List<EmergencyDTO> getDummyEmergencies() {
-        List<EmergencyDTO> emergencies = new ArrayList<>();
-        emergencies.add(new EmergencyDTO("1", "123 Main St", "Car accident", "Critical", 2.5, "2 mins ago"));
-        emergencies.add(new EmergencyDTO("2", "456 Oak Ave", "Medical emergency", "Stable", 3.1, "5 mins ago"));
-        emergencies.add(new EmergencyDTO("3", "789 Pine Rd", "Fire incident", "Unknown", 1.8, "Just now"));
-        return emergencies;
+        runOnUiThread(() -> {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("Error")
+                    .setMessage(message)
+                    .setPositiveButton("OK", null)
+                    .show();
+        });
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         checkDriverProfile();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (isFinishing()) {
+            stopServices();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        stopServices();
+        super.onDestroy();
+    }
+    @Override
+    protected void onStart() {
+        super.onStart();
+        EventBus.getDefault().register(this);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        EventBus.getDefault().unregister(this);
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onNewBooking(NewBookingEvent event) {
+        // Handle new bookings here
+        List<Booking> bookings = event.getBookings();
+        updateBookingsList(bookings);
+    }
+
+    private void updateBookingsList(List<Booking> bookings) {
+        if (bookings == null || bookings.isEmpty()) {
+            bookingRecyclerView.setVisibility(View.GONE);
+            emptyStateLayout.setVisibility(View.VISIBLE);
+            return;
+        }
+
+        bookingRecyclerView.setVisibility(View.VISIBLE);
+        emptyStateLayout.setVisibility(View.GONE);
+
+        if (bookingAdapter == null) {
+            bookingAdapter = new BookingAdapter(bookings, this::onBookingClicked);
+            bookingRecyclerView.setAdapter(bookingAdapter);
+            bookingRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+            // Add spacing between items
+            int spacing = getResources().getDimensionPixelSize(R.dimen.booking_item_spacing);
+            bookingRecyclerView.addItemDecoration(new SpacingItemDecoration(spacing));
+        } else {
+            bookingAdapter.updateBookings(bookings);
+        }
+    }
+
+    // Callback method for when a booking is clicked
+    private void onBookingClicked(Booking booking) {
+        Intent intent = new Intent(this, MapActivity.class);
+        intent.putExtra("booking_id", booking.getId());
+        intent.putExtra("pickup_lat", booking.getPickupLocation().getLatitude());
+        intent.putExtra("pickup_lng", booking.getPickupLocation().getLongitude());
+        intent.putExtra("drop_lat", booking.getDestinationLocation().getLatitude());
+        intent.putExtra("drop_lng", booking.getDestinationLocation().getLongitude());
+        startActivity(intent);
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
     }
 }
