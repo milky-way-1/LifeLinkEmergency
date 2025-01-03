@@ -1,20 +1,32 @@
 package com.emergency.model;
 
-public class Booking {
+
+import com.google.gson.annotations.SerializedName;
+
+public class Booking{
+
+    @SerializedName("id")
     private String id;
 
+    @SerializedName("userId")
     private String userId;
 
+    @SerializedName("driverId")
     private String driverId;
 
+    @SerializedName("pickupLocation")
     private Location pickupLocation;
 
+    @SerializedName("destinationLocation")
     private Location destinationLocation;
 
+    @SerializedName("status")
     private BookingStatus status;
 
-    private String createdAt;  // Using String instead of LocalDateTime for Android
+    @SerializedName("createdAt")
+    private String createdAt;
 
+    @SerializedName("updatedAt")
     private String updatedAt;
 
     // Default constructor
@@ -85,23 +97,4 @@ public class Booking {
         this.updatedAt = updatedAt;
     }
 
-    // Helper methods
-    public boolean isActive() {
-        return status != BookingStatus.COMPLETED &&
-                status != BookingStatus.CANCELLED;
-    }
-
-    @Override
-    public String toString() {
-        return "Booking{" +
-                "id='" + id + '\'' +
-                ", userId='" + userId + '\'' +
-                ", driverId='" + driverId + '\'' +
-                ", pickupLocation=" + pickupLocation +
-                ", destinationLocation=" + destinationLocation +
-                ", status=" + status +
-                ", createdAt='" + createdAt + '\'' +
-                ", updatedAt='" + updatedAt + '\'' +
-                '}';
-    }
 }

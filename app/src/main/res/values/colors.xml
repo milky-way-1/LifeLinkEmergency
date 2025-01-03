@@ -6,4 +6,23 @@
     <color name="white">#FFFFFFFF</color>
     <color name="colorPrimary">#2196F3</color>
     <color name="gray_600">#757575</color>
+
+    <color name="status_pending">#FFA000</color>
+    <color name="status_accepted">#4CAF50</color>
+    <color name="status_in_progress">#2196F3</color>
+    <color name="status_default">#757575</color>
+
+    <!-- Icon Colors -->
+    <color name="pickup_color">#4CAF50</color>
+    <color name="destination_color">#F44336</color>
+
+    <!-- Text Colors -->
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+
+    <!-- Card Colors -->
+    <color name="stroke_color">#E0E0E0</color>
+
+    <color name="colorPrimaryDark">#1976D2</color>
+    <color name="colorAccent">#FF4081</color>
 </resources>

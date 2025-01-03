@@ -125,7 +125,8 @@ public class LocationUpdateService {
     }
 
     private void checkForBookings() {
-        apiService.getDriverBookings("Bearer " + sessionManager.getToken())
+        String driverId = sessionManager.getUserId();
+        apiService.getDriverBookings("Bearer " + sessionManager.getToken(), driverId)
                 .enqueue(new Callback<List<Booking>>() {
                     @Override
                     public void onResponse(Call<List<Booking>> call,

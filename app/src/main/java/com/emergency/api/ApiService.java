@@ -44,8 +44,9 @@ public interface ApiService {
             @Body LocationUpdateDto locationDto
     );
 
-    @GET("api/bookings")
-    Call<List<Booking>> getDriverBookings(@Header("Authorization") String token);
+    @GET("api/bookings/{driverId}")
+    Call<List<Booking>> getDriverBookings(@Header("Authorization") String token,
+                                          @Path("driverId") String driverId);
 
     @GET("api/bookings/{id}")
     Call<Booking> getBookingDetails(
