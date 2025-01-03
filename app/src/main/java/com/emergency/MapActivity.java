@@ -34,6 +34,7 @@ import com.emergency.model.BookingStatus;
 import com.emergency.model.Location;
 import com.emergency.model.LocationUpdateDto;
 import com.emergency.util.DirectionsJSONParser;
+import com.emergency.util.FirestoreHelper;
 import com.emergency.util.MapUtils;
 import com.emergency.util.SessionManager;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -58,9 +59,9 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import android.Manifest;
-import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -75,6 +76,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -86,12 +88,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private static final float NAVIGATION_ZOOM = 18f;
     private static final float OVERVIEW_ZOOM = 15f;
     private static final float TILT_LEVEL = 45f;
-    private static final int LOCATION_UPDATE_INTERVAL = 3000; // 3 seconds
-    private static final int FASTEST_UPDATE_INTERVAL = 2000; // 2 seconds
+    private static final int LOCATION_UPDATE_INTERVAL = 3000;
+    private static final int FASTEST_UPDATE_INTERVAL = 2000;
 
-    // Map and Location related
+    private String bookingId;
     private GoogleMap mMap;
     private FusedLocationProviderClient fusedLocationClient;
+
+    private FirestoreHelper firestoreHelper;
     private LocationCallback locationCallback;
     private android.location.Location lastKnownLocation;
 
@@ -104,7 +108,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     // Location Data
     private Location pickupLocation;
     private Location dropLocation;
-    private String bookingId;
 
     // UI Elements
     private TextView statusText;
@@ -135,6 +138,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
 
+        bookingId = getIntent().getStringExtra("booking_id");
+
+        firestoreHelper = FirestoreHelper.getInstance();
 
         // Get and validate intent data first
         if (!validateAndGetIntentData()) {
@@ -268,31 +274,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         showBothLocations();
     }
 
-
-
-    private void getIntentData() {
-        Intent intent = getIntent();
-        bookingId = intent.getStringExtra("booking_id");
-        pickupLocation = new Location(
-                intent.getDoubleExtra("pickup_lat", 0),
-                intent.getDoubleExtra("pickup_lng", 0)
-        );
-        dropLocation = new Location(
-                intent.getDoubleExtra("drop_lat", 0),
-                intent.getDoubleExtra("drop_lng", 0)
-        );
-
-        updateUI();
-    }
-
-    private void setupMap() {
-        SupportMapFragment mapFragment = (SupportMapFragment)
-                getSupportFragmentManager().findFragmentById(R.id.map);
-        if (mapFragment != null) {
-            mapFragment.getMapAsync(this);
-        }
-    }
-
     @Override
     public void onMapReady(GoogleMap googleMap) {
 
@@ -365,34 +346,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         }
     }
-
-    private void addMarkers() {
-        try {
-            // Add pickup marker
-            LatLng pickupLatLng = new LatLng(pickupLocation.getLatitude(), pickupLocation.getLongitude());
-            pickupMarker = mMap.addMarker(new MarkerOptions()
-                    .position(pickupLatLng)
-                    .title("Pickup Location")
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-
-
-            // Add drop marker
-            LatLng dropLatLng = new LatLng(dropLocation.getLatitude(), dropLocation.getLongitude());
-            dropMarker = mMap.addMarker(new MarkerOptions()
-                    .position(dropLatLng)
-                    .title("Drop Location")
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
-
-
-            // Show both markers
-            showBothLocations();
-
-            fetchAndDrawRoute(pickupLatLng, dropLatLng);
-
-        } catch (Exception e) {
-
-        }
-    }
     private void showBothLocations() {
         try {
             if (pickupMarker == null || dropMarker == null) {
@@ -421,45 +374,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     }
                 });
             }
-        } catch (Exception e) {
-
-        }
-    }
-
-    private void addMarkersAndAdjustCamera() {
-        try {
-            // Add pickup marker
-            LatLng pickupLatLng = new LatLng(pickupLocation.getLatitude(), pickupLocation.getLongitude());
-            pickupMarker = mMap.addMarker(new MarkerOptions()
-                    .position(pickupLatLng)
-                    .title("Pickup Location")
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-           ;
-
-            // Add drop marker
-            LatLng dropLatLng = new LatLng(dropLocation.getLatitude(), dropLocation.getLongitude());
-            dropMarker = mMap.addMarker(new MarkerOptions()
-                    .position(dropLatLng)
-                    .title("Drop Location")
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
-
-
-            // Calculate bounds
-            LatLngBounds.Builder builder = new LatLngBounds.Builder();
-            builder.include(pickupLatLng);
-            builder.include(dropLatLng);
-            final LatLngBounds bounds = builder.build();
-
-            // Get map view width and height
-            View mapView = getSupportFragmentManager().findFragmentById(R.id.map).getView();
-            if (mapView.getWidth() > 0) {
-                // If view is already laid out, move camera immediately
-                moveCameraToShowMarkers(bounds);
-            } else {
-                // Wait for layout
-                mapView.post(() -> moveCameraToShowMarkers(bounds));
-            }
-
         } catch (Exception e) {
 
         }
@@ -496,127 +410,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             // Fallback to simple camera move
             try {
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(bounds.getCenter(), 12f));
-            } catch (Exception e2) {
-
-            }
-        }
-    }
-
-    private void addMarkersDelayed() {
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            try {
-                // Try adding just one marker first
-                LatLng pickup = new LatLng(pickupLocation.getLatitude(), pickupLocation.getLongitude());
-                mMap.addMarker(new MarkerOptions()
-                        .position(pickup)
-                        .title("Pickup"));
-
-
-                // Wait a bit before adding second marker
-                new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                    try {
-                        LatLng drop = new LatLng(dropLocation.getLatitude(), dropLocation.getLongitude());
-                        mMap.addMarker(new MarkerOptions()
-                                .position(drop)
-                                .title("Drop"));
-
-                    } catch (Exception e) {
-
-                    }
-                }, 1000);
-
-            } catch (Exception e) {
-
-            }
-        }, 1000);
-    }
-    private void addMarkersSimple() {
-        try {
-            // Add pickup marker
-            LatLng pickup = new LatLng(pickupLocation.getLatitude(), pickupLocation.getLongitude());
-            mMap.addMarker(new MarkerOptions()
-                    .position(pickup)
-                    .title("Pickup")
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-
-
-            // Add drop marker
-            LatLng drop = new LatLng(dropLocation.getLatitude(), dropLocation.getLongitude());
-            mMap.addMarker(new MarkerOptions()
-                    .position(drop)
-                    .title("Drop")
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
-
-
-            // Simple camera update
-            showBothLocations(pickup, drop);
-
-
-        } catch (Exception e) {
-
-        }
-    }
-    private void showBothLocations(LatLng pickup, LatLng drop) {
-        try {
-            LatLngBounds.Builder builder = new LatLngBounds.Builder();
-            builder.include(pickup);
-            builder.include(drop);
-
-            int padding = 200; // Larger padding to ensure markers are visible
-            mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(
-                    builder.build(), padding
-            ));
-        } catch (Exception e) {
-
-            // Fallback to showing just pickup location
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(pickup, 12f));
-        }
-    }
-
-    private boolean isValidLatLng(double lat, double lng) {
-        return lat != 0 && lng != 0 &&
-                lat >= -90 && lat <= 90 &&
-                lng >= -180 && lng <= 180;
-    }
-
-    private void moveCameraToShowMarkers(LatLng pickup, LatLng drop) {
-        try {
-            LatLngBounds.Builder builder = new LatLngBounds.Builder();
-            builder.include(pickup);
-            builder.include(drop);
-            final LatLngBounds bounds = builder.build();
-
-            // Get the map's view width and height
-            View mapView = getSupportFragmentManager().findFragmentById(R.id.map).getView();
-            if (mapView == null) {
-
-                return;
-            }
-
-            if (mapView.getWidth() == 0) {
-                // Wait for layout if width is zero
-                mapView.post(() -> moveCamera(bounds));
-            } else {
-                moveCamera(bounds);
-            }
-        } catch (Exception e) {
-
-        }
-    }
-
-    private void moveCamera(LatLngBounds bounds) {
-        try {
-            int padding = 100;
-            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
-            mMap.animateCamera(cu);
-
-        } catch (Exception e) {
-
-            // Fallback to a default location or zoom level
-            try {
-                LatLng center = bounds.getCenter();
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(center, 12f));
-
             } catch (Exception e2) {
 
             }
@@ -670,50 +463,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
 
-    private boolean validateIntentData() {
-        Intent intent = getIntent();
-        if (intent == null) {
-
-            return false;
-        }
-
-        bookingId = intent.getStringExtra("booking_id");
-        double pickupLat = intent.getDoubleExtra("pickup_lat", 0);
-        double pickupLng = intent.getDoubleExtra("pickup_lng", 0);
-        double dropLat = intent.getDoubleExtra("drop_lat", 0);
-        double dropLng = intent.getDoubleExtra("drop_lng", 0);
-
-
-
-        if (bookingId == null || pickupLat == 0 || pickupLng == 0 || dropLat == 0 || dropLng == 0) {
-
-            return false;
-        }
-
-        pickupLocation = new Location(pickupLat, pickupLng);
-        dropLocation = new Location(dropLat, dropLng);
-        return true;
-    }
-
-
     private void fetchAndDrawRoute(LatLng origin, LatLng destination) {
         String url = getDirectionsUrl(origin, destination);
         new FetchDirectionsTask().execute(url);
     }
 
-    private void setupLocationUpdates() {
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        locationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
-                if (locationResult == null) return;
 
-                android.location.Location location = locationResult.getLastLocation();
-                updateDriverLocation(location);
-                checkDestinationReached(location);
-            }
-        };
-    }
 
     private void startLocationTracking() {
         if (!checkLocationPermission()) {
@@ -757,6 +512,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 driverMarker.setRotation(location.getBearing());
             }
 
+            if (bookingId != null && !bookingId.isEmpty()) {
+
+            }
+
             // Update route if navigating
             if (isNavigating) {
                 LatLng destination = isNavigatingToPickup ?
@@ -778,30 +537,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
 
-    private void updateLocationInBackend(double latitude, double longitude) {
-        LocationUpdateDto locationDto = new LocationUpdateDto(latitude, longitude);
-        RetrofitClient.getInstance()
-                .getApiService()
-                .updateLocation("Bearer " + new SessionManager(this).getToken(), locationDto)
-                .enqueue(new retrofit2.Callback<Location>() {
-                    @Override
-                    public void onResponse(Call<Location> call, Response<Location> response) {
-                        if (!response.isSuccessful()) {
-                            Log.e(TAG, "Failed to update location: " + response.code());
-                        } else {
-                            Location updatedLocation = response.body();
-                            if (updatedLocation != null) {
-                                Log.d(TAG, "Location updated successfully: " + updatedLocation);
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Call<Location> call, Throwable t) {
-                        Log.e(TAG, "Error updating location", t);
-                    }
-                });
-    }
 
     private void checkDestinationReached(android.location.Location currentLocation) {
         Location targetLocation = isNavigatingToPickup ? pickupLocation : dropLocation;
@@ -820,6 +555,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             }
         }
     }
+
 
     private void handleActionButtonClick() {
         if (isNavigatingToPickup) {
@@ -920,22 +656,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         return hasPermission;
     }
 
-    private void showDetailedError(String title, String message) {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(title)
-                .setMessage(message)
-                .setPositiveButton("OK", (dialog, which) -> finish())
-                .setNegativeButton("Try Again", (dialog, which) -> {
-                    // Retry logic
-                    if (mMap != null) {
-                        setupMapUI();
-                        addMarkers();
-                        startLocationTracking();
-                    }
-                })
-                .setCancelable(false)
-                .show();
-    }
 
     private void requestLocationPermission() {
 
@@ -1005,18 +725,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         } catch (Exception e) {
 
         }
-    }
-
-    private void addPickupMarker() {
-        if (mMap == null || pickupLocation == null) return;
-
-        LatLng pickupLatLng = new LatLng(pickupLocation.getLatitude(), pickupLocation.getLongitude());
-        MarkerOptions pickupOptions = new MarkerOptions()
-                .position(pickupLatLng)
-                .title("Pickup Location")
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-
-        pickupMarker = mMap.addMarker(pickupOptions);
     }
 
     private void setupMapUI() {
@@ -1182,27 +890,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         return data;
     }
 
-    private String readStream(InputStream stream) throws IOException {
-        if (stream == null) return "";
-
-        StringBuilder data = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                data.append(line);
-            }
-        }
-        return data.toString();
-    }
-    private void showDebug(String message) {
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
-        } else {
-            runOnUiThread(() -> Toast.makeText(this, message, Toast.LENGTH_SHORT).show());
-        }
-        Log.d(TAG, message);
-    }
-
     private void addMarkersToMap() {
 
         try {
@@ -1255,6 +942,25 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
             fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
+            LocationRequest locationRequest = LocationRequest.create()
+                    .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                    .setInterval(3000);
+
+            locationCallback = new LocationCallback() {
+                @Override
+                public void onLocationResult(@NonNull LocationResult locationResult) {
+                    for (android.location.Location location : locationResult.getLocations()) {
+                        updateDriverLocation(location);
+
+                        LatLng driverLatLng = new LatLng(
+                                location.getLatitude(),
+                                location.getLongitude()
+                        );
+                        updateDriverLocationInFirestore(driverLatLng);
+                    }
+                }
+            };
+
             if (checkLocationPermission()) {
                 fusedLocationClient.getLastLocation()
                         .addOnSuccessListener(this, location -> {
@@ -1267,6 +973,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         })
                         .addOnFailureListener(e ->
                                 e.printStackTrace());
+
+                fusedLocationClient.requestLocationUpdates(locationRequest,
+                        locationCallback,
+                        Looper.getMainLooper());
+
+                Log.d(TAG, "Location tracking started");
             } else {
 
             }
@@ -1274,6 +986,29 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         } catch (Exception e) {
 
         }
+    }
+
+    private void updateDriverLocationInFirestore(LatLng location) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // Create document with all fields
+        Map<String, Object> locationUpdate = new HashMap<>();
+        locationUpdate.put("bookingId", bookingId);
+        locationUpdate.put("latitude", location.latitude);
+        locationUpdate.put("longitude", location.longitude);
+
+        // Using a single collection called "driver_locations"
+        db.collection("driver_locations")
+                .document(bookingId)  // Using bookingId as document ID
+                .set(locationUpdate)  // This will create or update the document
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Location updated - Booking: " + bookingId +
+                            " Lat: " + location.latitude +
+                            " Lng: " + location.longitude);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error updating location", e);
+                });
     }
 
     private BitmapDescriptor getBitmapDescriptor(@DrawableRes int vectorDrawableResourceId) {
