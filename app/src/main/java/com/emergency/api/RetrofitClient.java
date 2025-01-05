@@ -6,7 +6,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RetrofitClient {
-    private static final String BASE_URL = "https://lifelinkapi.onrender.com/";
+    private static final String BASE_URL = "https://lifelinkbackend.onrender.com/";
     private static RetrofitClient instance;
     private final ApiService apiService;
 

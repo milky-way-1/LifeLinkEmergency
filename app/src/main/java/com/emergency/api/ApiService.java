@@ -55,11 +55,15 @@ public interface ApiService {
     );
 
 
-        @POST("api/bookings/{id}/complete")
-        Call<Booking> completeBooking(
-                @Header("Authorization") String token,
-                @Path("id") String bookingId
-        );
-
+    @POST("api/bookings/{id}/complete")
+    Call<Booking> completeBooking(
+            @Header("Authorization") String token,
+            @Path("id") String bookingId
+    );
+    @GET("api/ambulance/driver/{email}")
+    Call<AmbulanceDriver> getDriverByUserId(
+            @Header("Authorization") String token,
+            @Path("email") String email
+    );
 
 }

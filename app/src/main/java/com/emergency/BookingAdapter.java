@@ -78,8 +78,8 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.BookingV
         }
 
         public void bind(Booking booking) {
-            pickupAddressText.setText(booking.getPickupLocation().toString());
-            destinationAddressText.setText(booking.getDestinationLocation().toString());
+            pickupAddressText.setText("Pickup Location");
+            destinationAddressText.setText("Hospital Locaion");
 
             statusText.setText(booking.getStatus().toString());
 

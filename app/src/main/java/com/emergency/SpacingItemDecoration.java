@@ -16,9 +16,11 @@ public class SpacingItemDecoration extends RecyclerView.ItemDecoration {
     @Override
     public void getItemOffsets(@NonNull Rect outRect, @NonNull View view,
                                @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
+        outRect.left = spacing;
+        outRect.right = spacing;
         outRect.bottom = spacing;
 
-        // Add top spacing for first item
+        // Add top margin only for the first item
         if (parent.getChildAdapterPosition(view) == 0) {
             outRect.top = spacing;
         }
