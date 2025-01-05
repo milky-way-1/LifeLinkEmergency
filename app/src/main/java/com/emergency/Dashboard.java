@@ -63,49 +63,48 @@ public class Dashboard extends AppCompatActivity implements BookingAdapter.OnBoo
     protected void onCreate(Bundle savedInstanceState) {
         try {
             super.onCreate(savedInstanceState);
-            Toast.makeText(this, "1. Starting onCreate", Toast.LENGTH_SHORT).show();
+
 
             setContentView(R.layout.activity_dashboard);
-            Toast.makeText(this, "2. Layout set", Toast.LENGTH_SHORT).show();
+
 
             sessionManager = new SessionManager(this);
-            Toast.makeText(this, "3. Session manager created", Toast.LENGTH_SHORT).show();
 
             initializeViews();
-            Toast.makeText(this, "4. Views initialized", Toast.LENGTH_SHORT).show();
+
 
             setupRecyclerView();
-            Toast.makeText(this, "5. RecyclerView setup", Toast.LENGTH_SHORT).show();
+
 
             checkDriverProfile();
-            Toast.makeText(this, "6. Driver profile check started", Toast.LENGTH_SHORT).show();
+
 
         } catch (Exception e) {
-            Toast.makeText(this, "ERROR in onCreate: " + e.getMessage(), Toast.LENGTH_LONG).show();
+
         }
     }
 
     private void initializeViews() {
         try {
-            Toast.makeText(this, "Init Views 1: Finding SwipeRefresh", Toast.LENGTH_SHORT).show();
+
             swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
 
-            Toast.makeText(this, "Init Views 2: Finding RecyclerView", Toast.LENGTH_SHORT).show();
+
             bookingRecyclerView = findViewById(R.id.bookingRecyclerView);
 
-            Toast.makeText(this, "Init Views 3: Finding other layouts", Toast.LENGTH_SHORT).show();
+
             emptyStateLayout = findViewById(R.id.emptyStateLayout);
             registeredDriverLayout = findViewById(R.id.registeredDriverLayout);
             unregisteredDriverLayout = findViewById(R.id.unregisteredDriverLayout);
             driverStatusLoading = findViewById(R.id.driverStatusLoading);
 
-            Toast.makeText(this, "Init Views 4: Finding TextViews", Toast.LENGTH_SHORT).show();
+
             driverNameText = findViewById(R.id.driverNameText);
             vehicleTypeText = findViewById(R.id.vehicleTypeText);
             plateNumberText = findViewById(R.id.plateNumberText);
             registerButton = findViewById(R.id.registerButton);
 
-            Toast.makeText(this, "Init Views 5: Setting up register button", Toast.LENGTH_SHORT).show();
+
             if (registerButton != null) {
                 registerButton.setOnClickListener(v -> {
                     Intent intent = new Intent(this, DriverRegistration.class);
@@ -113,71 +112,63 @@ public class Dashboard extends AppCompatActivity implements BookingAdapter.OnBoo
                 });
             }
 
-            Toast.makeText(this, "Init Views 6: Setting up SwipeRefresh", Toast.LENGTH_SHORT).show();
+
             if (swipeRefreshLayout != null) {
                 swipeRefreshLayout.setOnRefreshListener(this::refreshData);
                 swipeRefreshLayout.setColorSchemeResources(android.R.color.holo_blue_bright);
             }
 
-            Toast.makeText(this, "Init Views Complete", Toast.LENGTH_SHORT).show();
+
 
         } catch (Exception e) {
-            Toast.makeText(this, "ERROR in initializeViews: " + e.getMessage(), Toast.LENGTH_LONG).show();
+
         }
     }
 
     private void setupRecyclerView() {
         try {
-            Toast.makeText(this, "Setup RecyclerView 1: Creating adapter", Toast.LENGTH_SHORT).show();
             bookingAdapter = new BookingAdapter(new ArrayList<>(), this);
 
-            Toast.makeText(this, "Setup RecyclerView 2: Setting layout manager", Toast.LENGTH_SHORT).show();
+
             bookingRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-            Toast.makeText(this, "Setup RecyclerView 3: Setting adapter", Toast.LENGTH_SHORT).show();
             bookingRecyclerView.setAdapter(bookingAdapter);
 
-            Toast.makeText(this, "Setup RecyclerView Complete", Toast.LENGTH_SHORT).show();
 
         } catch (Exception e) {
-            Toast.makeText(this, "ERROR in setupRecyclerView: " + e.getMessage(), Toast.LENGTH_LONG).show();
+
         }
     }
 
     private void refreshData() {
         try {
-            Toast.makeText(this, "Refresh 1: Getting token", Toast.LENGTH_SHORT).show();
             String token = sessionManager.getToken();
             if (token == null) {
                 swipeRefreshLayout.setRefreshing(false);
-                Toast.makeText(this, "Please login again", Toast.LENGTH_SHORT).show();
+
                 return;
             }
 
-            Toast.makeText(this, "Refresh 2: Making API call", Toast.LENGTH_SHORT).show();
+
             RetrofitClient.getInstance()
                     .getApiService()
                     .getDriverByUserId("Bearer " + token, sessionManager.getEmail())
                     .enqueue(new Callback<AmbulanceDriver>() {
                         @Override
                         public void onResponse(Call<AmbulanceDriver> call, Response<AmbulanceDriver> response) {
-                            Toast.makeText(Dashboard.this, "Refresh 3: Got driver ID response", Toast.LENGTH_SHORT).show();
                             if(response.isSuccessful() && response.body() != null) {
                                 fetchBookings(response.body().getId(), token);
                             } else {
                                 swipeRefreshLayout.setRefreshing(false);
-                                Toast.makeText(Dashboard.this, "Error fetching driver ID", Toast.LENGTH_SHORT).show();
                             }
                         }
 
                         @Override
                         public void onFailure(Call<AmbulanceDriver> call, Throwable t) {
                             swipeRefreshLayout.setRefreshing(false);
-                            Toast.makeText(Dashboard.this, "Network Error in refresh", Toast.LENGTH_SHORT).show();
                         }
                     });
         } catch (Exception e) {
-            Toast.makeText(this, "ERROR in refreshData: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -192,14 +183,12 @@ public class Dashboard extends AppCompatActivity implements BookingAdapter.OnBoo
                         if (response.isSuccessful() && response.body() != null) {
                             updateBookingList(response.body());
                         } else {
-                            Toast.makeText(Dashboard.this, "Error fetching bookings", Toast.LENGTH_SHORT).show();
                         }
                     }
 
                     @Override
                     public void onFailure(Call<List<Booking>> call, Throwable t) {
                         swipeRefreshLayout.setRefreshing(false);
-                        Toast.makeText(Dashboard.this, "Network error", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
@@ -209,7 +198,6 @@ public class Dashboard extends AppCompatActivity implements BookingAdapter.OnBoo
         String token = sessionManager.getToken();
         if (token == null) {
             hideLoadingState();
-            Toast.makeText(this, "Please login again", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -235,7 +223,6 @@ public class Dashboard extends AppCompatActivity implements BookingAdapter.OnBoo
                     @Override
                     public void onFailure(Call<ApiResponse<AmbulanceDriver>> call, Throwable t) {
                         hideLoadingState();
-                        Toast.makeText(Dashboard.this, "Network error", Toast.LENGTH_SHORT).show();
                         updateDriverStatus(false, null);
                     }
                 });
