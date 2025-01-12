@@ -572,20 +572,51 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
 
     private void completeBooking() {
+        // Show loading indicator
         loadingIndicator.setVisibility(View.VISIBLE);
         actionButton.setEnabled(false);
 
+        // Get token from session manager
+        String token = new SessionManager(this).getToken();
+        if (token == null) {
+            showError("Authentication error. Please login again.");
+            loadingIndicator.setVisibility(View.GONE);
+            actionButton.setEnabled(true);
+            return;
+        }
+
+        // Create API call
         RetrofitClient.getInstance()
                 .getApiService()
-                .completeBooking("Bearer " + new SessionManager(this).getToken(), bookingId)
+                .completeBooking("Bearer " + token, bookingId)
                 .enqueue(new Callback<Booking>() {
                     @Override
                     public void onResponse(Call<Booking> call, Response<Booking> response) {
                         loadingIndicator.setVisibility(View.GONE);
                         actionButton.setEnabled(true);
 
-                        if (response.isSuccessful()) {
-                            finish();
+                        if (response.isSuccessful() && response.body() != null) {
+                            // Show success message
+                            new MaterialAlertDialogBuilder(MapActivity.this)
+                                    .setTitle("Success")
+                                    .setMessage("Booking completed successfully")
+                                    .setPositiveButton("OK", (dialog, which) -> {
+                                        // Stop location updates
+                                        if (fusedLocationClient != null && locationCallback != null) {
+                                            fusedLocationClient.removeLocationUpdates(locationCallback);
+                                        }
+
+                                        // Remove Firestore location data
+                                        FirebaseFirestore.getInstance()
+                                                .collection("driver_locations")
+                                                .document(bookingId)
+                                                .delete();
+
+                                        // Close activity
+                                        finish();
+                                    })
+                                    .setCancelable(false)
+                                    .show();
                         } else {
                             showError("Failed to complete booking");
                         }
@@ -595,7 +626,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     public void onFailure(Call<Booking> call, Throwable t) {
                         loadingIndicator.setVisibility(View.GONE);
                         actionButton.setEnabled(true);
-                        showError("Network error while completing booking");
+                        showError("Network error: " + t.getMessage());
                     }
                 });
     }
